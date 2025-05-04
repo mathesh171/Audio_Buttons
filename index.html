@@ -1,0 +1,326 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tamil Sound Buttons</title>
+    <style>
+        body {
+            background-color: #1a2129;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 2vw;
+            text-align: center;
+            min-height: 100vh;
+            color: white;
+            box-sizing: border-box;
+        }
+        
+        h1 {
+            color: white;
+            margin-bottom: 5vw;
+            font-weight: 600;
+            letter-spacing: 0.05rem;
+            text-shadow: 0 0.1rem 0.2rem rgba(0, 0, 0, 0.5);
+            font-size: clamp(1.8rem, 5vw, 2.2rem);
+        }
+        
+        .button-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: clamp(1rem, 3vw, 1.5rem);
+            max-width: 100%;
+            margin: 0 auto;
+        }
+        
+        .sound-button-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: clamp(100px, 25vw, 130px);
+            margin-bottom: clamp(1.5rem, 4vw, 2rem);
+        }
+        
+        .sound-button {
+            width: 100%;
+            aspect-ratio: 1/1;
+            border-radius: 50%;
+            cursor: pointer;
+            position: relative;
+            border: none;
+            outline: none;
+            transition: transform 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+        
+        .sound-button::after {
+            content: '';
+            position: absolute;
+            top: -6%;
+            left: -6%;
+            right: -6%;
+            bottom: -6%;
+            border-radius: 50%;
+            z-index: -1;
+            background: radial-gradient(circle at center, 
+                          rgba(0,0,0,0.3) 30%, 
+                          rgba(0,0,0,0.5) 70%);
+        }
+        
+        .sound-button .button-face {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 50%;
+            overflow: hidden;
+        }
+        
+        .sound-button .glossy-effect {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: linear-gradient(135deg, 
+                          rgba(255,255,255,0.5) 0%, 
+                          rgba(255,255,255,0.2) 30%, 
+                          rgba(255,255,255,0) 50%);
+            top: 0;
+            left: 0;
+        }
+        
+        .sound-button:active {
+            transform: translateY(0.2rem);
+            box-shadow: 0 0.1rem 0.3rem rgba(0,0,0,0.3);
+        }
+        
+        .button-label {
+            color: white;
+            font-size: clamp(0.7rem, 2.5vw, 0.85rem);
+            margin-top: 0.75rem;
+            text-align: center;
+            font-weight: 500;
+            word-wrap: break-word;
+            max-width: 100%;
+        }
+        
+        .red {
+            background: radial-gradient(circle at 30% 30%, #ff3b3b 0%, #c00 60%, #a00 100%);
+            box-shadow: 0 0.3rem 0.5rem rgba(200, 0, 0, 0.4), inset 0 -0.2rem 0 rgba(80, 0, 0, 0.4);
+        }
+        
+        .green {
+            background: radial-gradient(circle at 30% 30%, #60e660 0%, #0c0 60%, #090 100%);
+            box-shadow: 0 0.3rem 0.5rem rgba(0, 150, 0, 0.4), inset 0 -0.2rem 0 rgba(0, 80, 0, 0.4);
+        }
+        
+        .blue {
+            background: radial-gradient(circle at 30% 30%, #4a9fff 0%, #0066cc 60%, #004c99 100%);
+            box-shadow: 0 0.3rem 0.5rem rgba(0, 102, 204, 0.4), inset 0 -0.2rem 0 rgba(0, 51, 153, 0.4);
+        }
+        
+        .yellow {
+            background: radial-gradient(circle at 30% 30%, #ffea4a 0%, #cc9900 60%, #996600 100%);
+            box-shadow: 0 0.3rem 0.5rem rgba(204, 153, 0, 0.4), inset 0 -0.2rem 0 rgba(153, 102, 0, 0.4);
+        }
+        
+        .purple {
+            background: radial-gradient(circle at 30% 30%, #d14aff 0%, #8800cc 60%, #660099 100%);
+            box-shadow: 0 0.3rem 0.5rem rgba(136, 0, 204, 0.4), inset 0 -0.2rem 0 rgba(102, 0, 153, 0.4);
+        }
+        
+        .pink {
+            background: radial-gradient(circle at 30% 30%, #ff8ad1 0%, #ff33ad 60%, #cc0080 100%);
+            box-shadow: 0 0.3rem 0.5rem rgba(204, 0, 128, 0.4), inset 0 -0.2rem 0 rgba(153, 0, 96, 0.4);
+        }
+        
+        .white {
+            background: radial-gradient(circle at 30% 30%, #ffffff 0%, #e6e6e6 60%, #cccccc 100%);
+            box-shadow: 0 0.3rem 0.5rem rgba(150, 150, 150, 0.4), inset 0 -0.2rem 0 rgba(120, 120, 120, 0.4);
+        }
+        
+        .lime {
+            background: radial-gradient(circle at 30% 30%, #b3ff4a 0%, #88cc00 60%, #669900 100%);
+            box-shadow: 0 0.3rem 0.5rem rgba(136, 204, 0, 0.4), inset 0 -0.2rem 0 rgba(102, 153, 0, 0.4);
+        }
+
+        footer {
+            margin-top: clamp(2rem, 5vw, 3rem);
+            color: rgba(255, 255, 255, 0.5);
+            font-size: clamp(0.6rem, 2vw, 0.75rem);
+            padding: 0.5rem;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7); }
+            70% { box-shadow: 0 0 0 0.5rem rgba(255, 255, 255, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+        }
+
+        .sound-button.is-playing {
+            animation: pulse 2s infinite;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 1rem;
+            }
+
+            .button-container {
+                gap: 0.75rem;
+            }
+
+            .sound-button-wrapper {
+                width: clamp(80px, 22vw, 100px);
+                margin-bottom: 1rem;
+            }
+
+            .sound-button::after {
+                top: -4%;
+                left: -4%;
+                right: -4%;
+                bottom: -4%;
+            }
+
+            .button-label {
+                font-size: clamp(0.6rem, 2.2vw, 0.75rem);
+                margin-top: 0.5rem;
+            }
+
+            h1 {
+                font-size: clamp(1.5rem, 4.5vw, 1.8rem);
+                margin-bottom: 3vw;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .sound-button-wrapper {
+                width: clamp(70px, 20vw, 90px);
+            }
+
+            .button-label {
+                font-size: clamp(0.55rem, 2vw, 0.7rem);
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Tamil Sound Buttons</h1>
+    
+    <div class="button-container"></div>
+
+    <footer>
+        ©Personal Collection
+    </footer>
+
+    <script>
+        let currentAudio = null;
+        let currentButton = null;
+        const colors = ['red', 'pink', 'green', 'blue', 'yellow', 'purple', 'white', 'lime'];
+
+        function playSound(audioUrl, button) {
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+                if (currentButton) {
+                    currentButton.classList.remove('is-playing');
+                }
+            }
+
+            currentAudio = new Audio(audioUrl);
+            currentButton = button;
+            currentButton.classList.add('is-playing');
+
+            currentAudio.play().catch(error => {
+                console.error('Error playing audio:', error);
+            });
+
+            currentAudio.addEventListener('ended', () => {
+                currentButton.classList.remove('is-playing');
+                currentAudio = null;
+                currentButton = null;
+            });
+        }
+
+        async function loadAudioFiles() {
+            const repo = 'mathesh171/Audio_Buttons';
+            const audioPath = 'audio';
+            const apiUrl = `https://api.github.com/repos/${repo}/contents/${audioPath}`;
+            try {
+                const response = await fetch(apiUrl);
+                if (!response.ok) {
+                    throw new Error(`GitHub API error: ${response.status}`);
+                }
+                const files = await response.json();
+                const audioFiles = files.filter(file => /\.(mp3|wav|ogg)$/i.test(file.name));
+                const container = document.querySelector('.button-container');
+
+                audioFiles.forEach(file => {
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'sound-button-wrapper';
+
+                    const button = document.createElement('button');
+                    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+                    button.className = `sound-button ${randomColor}`;
+                    button.innerHTML = '<div class="button-face"></div><div class="glossy-effect"></div>';
+                    button.onclick = () => playSound(file.download_url, button);
+
+                    const label = document.createElement('div');
+                    label.className = 'button-label';
+                    label.textContent = file.name.replace(/\.(mp3|wav|ogg)$/i, '');
+
+                    wrapper.appendChild(button);
+                    wrapper.appendChild(label);
+                    container.appendChild(wrapper);
+                });
+            } catch (error) {
+                console.error('Error fetching audio files:', error);
+                const container = document.querySelector('.button-container');
+                container.innerHTML = '<p style="color: red;">Failed to load audio files. Please try again later.</p>';
+            }
+        }
+
+        window.onload = loadAudioFiles;
+    </script>
+</body>
+</html>
