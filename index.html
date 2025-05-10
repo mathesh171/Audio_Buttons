@@ -26,6 +26,18 @@
             font-size: clamp(1.8rem, 5vw, 2.2rem);
         }
         
+        .section {
+            margin-bottom: clamp(2rem, 5vw, 3rem);
+        }
+        
+        .section-header {
+            color: white;
+            font-size: clamp(1.2rem, 3.5vw, 1.5rem);
+            font-weight: 500;
+            margin: 1.5rem 0 1rem;
+            text-shadow: 0 0.05rem 0.1rem rgba(0, 0, 0, 0.5);
+        }
+        
         .button-container {
             display: flex;
             flex-wrap: wrap;
@@ -52,7 +64,7 @@
             border: none;
             outline: none;
             transition: transform 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-            background-size: cover; /* Zoom to fit without stretching */
+            background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
         }
@@ -108,13 +120,47 @@
             word-wrap: break-word;
             max-width: 100%;
         }
-
-        /* Fallback style if no image is found */
-        .sound-button.no-image {
+        
+        .red {
+            background: radial-gradient(circle at 30% 30%, #ff3b3b 0%, #c00 60%, #a00 100%);
+            box-shadow: 0 0.3rem 0.5rem rgba(200, 0, 0, 0.4), inset 0 -0.2rem 0 rgba(80, 0, 0, 0.4);
+        }
+        
+        .green {
+            background: radial-gradient(circle at 30% 30%, #60e660 0%, #0c0 60%, #090 100%);
+            box-shadow: 0 0.3rem 0.5rem rgba(0, 150, 0, 0.4), inset 0 -0.2rem 0 rgba(0, 80, 0, 0.4);
+        }
+        
+        .blue {
             background: radial-gradient(circle at 30% 30%, #4a9fff 0%, #0066cc 60%, #004c99 100%);
             box-shadow: 0 0.3rem 0.5rem rgba(0, 102, 204, 0.4), inset 0 -0.2rem 0 rgba(0, 51, 153, 0.4);
         }
         
+        .yellow {
+            background: radial-gradient(circle at 30% 30%, #ffea4a 0%, #cc9900 60%, #996600 100%);
+            box-shadow: 0 0.3rem 0.5rem rgba(204, 153, 0, 0.4), inset 0 -0.2rem 0 rgba(153, 102, 0, 0.4);
+        }
+        
+        .purple {
+            background: radial-gradient(circle at 30% 30%, #d14aff 0%, #8800cc 60%, #660099 100%);
+            box-shadow: 0 0.3rem 0.5rem rgba(136, 0, 204, 0.4), inset 0 -0.2rem 0 rgba(102, 0, 153, 0.4);
+        }
+        
+        .pink {
+            background: radial-gradient(circle at 30% 30%, #ff8ad1 0%, #ff33ad 60%, #cc0080 100%);
+            box-shadow: 0 0.3rem 0.5rem rgba(204, 0, 128, 0.4), inset 0 -0.2rem 0 rgba(153, 0, 96, 0.4);
+        }
+        
+        .white {
+            background: radial-gradient(circle at 30% 30%, #ffffff 0%, #e6e6e6 60%, #cccccc 100%);
+            box-shadow: 0 0.3rem 0.5rem rgba(150, 150, 150, 0.4), inset 0 -0.2rem 0 rgba(120, 120, 120, 0.4);
+        }
+        
+        .lime {
+            background: radial-gradient(circle at 30% 30%, #b3ff4a 0%, #88cc00 60%, #669900 100%);
+            box-shadow: 0 0.3rem 0.5rem rgba(136, 204, 0, 0.4), inset 0 -0.2rem 0 rgba(102, 153, 0, 0.4);
+        }
+
         footer {
             margin-top: clamp(2rem, 5vw, 3rem);
             color: rgba(255, 255, 255, 0.5);
@@ -162,6 +208,10 @@
                 font-size: clamp(1.5rem, 4.5vw, 1.8rem);
                 margin-bottom: 3vw;
             }
+
+            .section-header {
+                font-size: clamp(1rem, 3vw, 1.2rem);
+            }
         }
 
         @media (max-width: 400px) {
@@ -178,7 +228,7 @@
 <body>
     <h1>Audio Buttons</h1>
     
-    <div class="button-container"></div>
+    <div class="sections-container"></div>
 
     <footer>
         ©Personal Collection
@@ -187,12 +237,13 @@
     <script>
         let currentAudio = null;
         let currentButton = null;
+        const colors = ['red', 'pink', 'green', 'blue', 'yellow', 'purple', 'white', 'lime'];
 
         function playSound(audioUrl, button) {
             if (currentAudio) {
                 currentAudio.pause();
                 currentAudio.currentTime = 0;
-                if (currentButton) {
+                if ( button !== currentButton && currentButton) {
                     currentButton.classList.remove('is-playing');
                 }
             }
@@ -220,62 +271,104 @@
             const imageApiUrl = `https://api.github.com/repos/${repo}/contents/${imagePath}`;
 
             try {
-                // Fetch audio files
+                // Fetch image files
+                let imageMap = {};
+                try {
+                    const imageResponse = await fetch(imageApiUrl);
+                    if (imageResponse.ok) {
+                        const imageFiles = await imageResponse.json();
+                        const validImageFiles = imageFiles.filter(file => /\.(png|jpg|jpeg)$/i.test(file.name));
+                        validImageFiles.forEach(image => {
+                            const imageName = image.name.replace(/\.(png|jpg|jpeg)$/i, '');
+                            imageMap[imageName] = image.download_url;
+                        });
+                    } else {
+                        console.warn('Images folder not found or inaccessible. Using colors only.');
+                    }
+                } catch (error) {
+                    console.warn('Error fetching images:', error);
+                }
+
+                // Fetch audio subfolders
                 const audioResponse = await fetch(audioApiUrl);
                 if (!audioResponse.ok) {
                     throw new Error(`GitHub API error for audio: ${audioResponse.status}`);
                 }
-                const audioFiles = await audioResponse.json();
-                const validAudioFiles = audioFiles.filter(file => /\.(mp3|wav|ogg)$/i.test(file.name));
+                const audioContents = await audioResponse.json();
+                const subfolders = audioContents.filter(item => item.type === 'dir');
 
-                // Fetch image files
-                const imageResponse = await fetch(imageApiUrl);
-                if (!imageResponse.ok) {
-                    throw new Error(`GitHub API error for images: ${imageResponse.status}`);
+                if (subfolders.length === 0) {
+                    throw new Error('No subfolders found in audio directory.');
                 }
-                const imageFiles = await imageResponse.json();
-                const validImageFiles = imageFiles.filter(file => /\.(png|jpg|jpeg)$/i.test(file.name));
 
-                // Create a map of image filenames (without extension) to their download URLs
-                const imageMap = {};
-                validImageFiles.forEach(image => {
-                    const imageName = image.name.replace(/\.(png|jpg|jpeg)$/i, '');
-                    imageMap[imageName] = image.download_url;
-                });
+                // Sort subfolders alphabetically
+                subfolders.sort((a, b) => a.name.localeCompare(b.name));
 
-                const container = document.querySelector('.button-container');
+                const sectionsContainer = document.querySelector('.sections-container');
 
-                validAudioFiles.forEach(file => {
-                    const wrapper = document.createElement('div');
-                    wrapper.className = 'sound-button-wrapper';
+                // Process each subfolder
+                for (const subfolder of subfolders) {
+                    // Create section
+                    const section = document.createElement('div');
+                    section.className = 'section';
 
-                    const button = document.createElement('button');
-                    button.className = 'sound-button';
-                    button.innerHTML = '<div class="button-face"></div><div class="glossy-effect"></div>';
+                    // Add section header
+                    const header = document.createElement('h2');
+                    header.className = 'section-header';
+                    header.textContent = subfolder.name;
+                    section.appendChild(header);
 
-                    // Get audio file name without extension
-                    const audioName = file.name.replace(/\.(mp3|wav|ogg)$/i, '');
+                    // Create button container
+                    const container = document.createElement('div');
+                    container.className = 'button-container';
 
-                    // Set background image if available
-                    if (imageMap[audioName]) {
-                        button.style.backgroundImage = `url(${imageMap[audioName]})`;
-                    } else {
-                        button.classList.add('no-image'); // Fallback to default blue button
+                    // Fetch audio files in subfolder
+                    const subfolderUrl = `https://api.github.com/repos/${repo}/contents/${audioPath}/${subfolder.name}`;
+                    const subfolderResponse = await fetch(subfolderUrl);
+                    if (!subfolderResponse.ok) {
+                        console.warn(`Failed to fetch subfolder ${subfolder.name}: ${subfolderResponse.status}`);
+                        continue;
                     }
+                    const audioFiles = await subfolderResponse.json();
+                    const validAudioFiles = audioFiles.filter(file => /\.(mp3|wav|ogg)$/i.test(file.name));
 
-                    button.onclick = () => playSound(file.download_url, button);
+                    // Create buttons for audio files
+                    validAudioFiles.forEach(file => {
+                        const wrapper = document.createElement('div');
+                        wrapper.className = 'sound-button-wrapper';
 
-                    const label = document.createElement('div');
-                    label.className = 'button-label';
-                    label.textContent = audioName;
+                        const button = document.createElement('button');
+                        button.className = 'sound-button';
+                        button.innerHTML = '<div class="button-face"></div><div class="glossy-effect"></div>';
 
-                    wrapper.appendChild(button);
-                    wrapper.appendChild(label);
-                    container.appendChild(wrapper);
-                });
+                        // Get audio file name without extension
+                        const audioName = file.name.replace(/\.(mp3|wav|ogg)$/i, '');
+
+                        // Set background image or random color
+                        if (imageMap[audioName]) {
+                            button.style.backgroundImage = `url(${imageMap[audioName]})`;
+                        } else {
+                            const randomColor = colors[Math.floor(Math.random() * colors.length)];
+                            button.classList.add(randomColor);
+                        }
+
+                        button.onclick = () => playSound(file.download_url, button);
+
+                        const label = document.createElement('div');
+                        label.className = 'button-label';
+                        label.textContent = audioName;
+
+                        wrapper.appendChild(button);
+                        wrapper.appendChild(label);
+                        container.appendChild(wrapper);
+                    });
+
+                    section.appendChild(container);
+                    sectionsContainer.appendChild(section);
+                }
             } catch (error) {
                 console.error('Error fetching files:', error);
-                const container = document.querySelector('.button-container');
+                const container = document.querySelector('.sections-container');
                 container.innerHTML = '<p style="color: red;">Failed to load audio or image files. Please try again later.</p>';
             }
         }
