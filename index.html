@@ -1,43 +1,4 @@
-<script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
-
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
-                }
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-        </script><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -91,6 +52,9 @@
             border: none;
             outline: none;
             transition: transform 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+            background-size: cover; /* Zoom to fit without stretching */
+            background-position: center;
+            background-repeat: no-repeat;
         }
         
         .sound-button::after {
@@ -144,47 +108,13 @@
             word-wrap: break-word;
             max-width: 100%;
         }
-        
-        .red {
-            background: radial-gradient(circle at 30% 30%, #ff3b3b 0%, #c00 60%, #a00 100%);
-            box-shadow: 0 0.3rem 0.5rem rgba(200, 0, 0, 0.4), inset 0 -0.2rem 0 rgba(80, 0, 0, 0.4);
-        }
-        
-        .green {
-            background: radial-gradient(circle at 30% 30%, #60e660 0%, #0c0 60%, #090 100%);
-            box-shadow: 0 0.3rem 0.5rem rgba(0, 150, 0, 0.4), inset 0 -0.2rem 0 rgba(0, 80, 0, 0.4);
-        }
-        
-        .blue {
+
+        /* Fallback style if no image is found */
+        .sound-button.no-image {
             background: radial-gradient(circle at 30% 30%, #4a9fff 0%, #0066cc 60%, #004c99 100%);
             box-shadow: 0 0.3rem 0.5rem rgba(0, 102, 204, 0.4), inset 0 -0.2rem 0 rgba(0, 51, 153, 0.4);
         }
         
-        .yellow {
-            background: radial-gradient(circle at 30% 30%, #ffea4a 0%, #cc9900 60%, #996600 100%);
-            box-shadow: 0 0.3rem 0.5rem rgba(204, 153, 0, 0.4), inset 0 -0.2rem 0 rgba(153, 102, 0, 0.4);
-        }
-        
-        .purple {
-            background: radial-gradient(circle at 30% 30%, #d14aff 0%, #8800cc 60%, #660099 100%);
-            box-shadow: 0 0.3rem 0.5rem rgba(136, 0, 204, 0.4), inset 0 -0.2rem 0 rgba(102, 0, 153, 0.4);
-        }
-        
-        .pink {
-            background: radial-gradient(circle at 30% 30%, #ff8ad1 0%, #ff33ad 60%, #cc0080 100%);
-            box-shadow: 0 0.3rem 0.5rem rgba(204, 0, 128, 0.4), inset 0 -0.2rem 0 rgba(153, 0, 96, 0.4);
-        }
-        
-        .white {
-            background: radial-gradient(circle at 30% 30%, #ffffff 0%, #e6e6e6 60%, #cccccc 100%);
-            box-shadow: 0 0.3rem 0.5rem rgba(150, 150, 150, 0.4), inset 0 -0.2rem 0 rgba(120, 120, 120, 0.4);
-        }
-        
-        .lime {
-            background: radial-gradient(circle at 30% 30%, #b3ff4a 0%, #88cc00 60%, #669900 100%);
-            box-shadow: 0 0.3rem 0.5rem rgba(136, 204, 0, 0.4), inset 0 -0.2rem 0 rgba(102, 153, 0, 0.4);
-        }
-
         footer {
             margin-top: clamp(2rem, 5vw, 3rem);
             color: rgba(255, 255, 255, 0.5);
@@ -257,7 +187,6 @@
     <script>
         let currentAudio = null;
         let currentButton = null;
-        const colors = ['red', 'pink', 'green', 'blue', 'yellow', 'purple', 'white', 'lime'];
 
         function playSound(audioUrl, button) {
             if (currentAudio) {
@@ -286,38 +215,68 @@
         async function loadAudioFiles() {
             const repo = 'mathesh171/Audio_Buttons';
             const audioPath = 'audio';
-            const apiUrl = `https://api.github.com/repos/${repo}/contents/${audioPath}`;
+            const imagePath = 'images';
+            const audioApiUrl = `https://api.github.com/repos/${repo}/contents/${audioPath}`;
+            const imageApiUrl = `https://api.github.com/repos/${repo}/contents/${imagePath}`;
+
             try {
-                const response = await fetch(apiUrl);
-                if (!response.ok) {
-                    throw new Error(`GitHub API error: ${response.status}`);
+                // Fetch audio files
+                const audioResponse = await fetch(audioApiUrl);
+                if (!audioResponse.ok) {
+                    throw new Error(`GitHub API error for audio: ${audioResponse.status}`);
                 }
-                const files = await response.json();
-                const audioFiles = files.filter(file => /\.(mp3|wav|ogg)$/i.test(file.name));
+                const audioFiles = await audioResponse.json();
+                const validAudioFiles = audioFiles.filter(file => /\.(mp3|wav|ogg)$/i.test(file.name));
+
+                // Fetch image files
+                const imageResponse = await fetch(imageApiUrl);
+                if (!imageResponse.ok) {
+                    throw new Error(`GitHub API error for images: ${imageResponse.status}`);
+                }
+                const imageFiles = await imageResponse.json();
+                const validImageFiles = imageFiles.filter(file => /\.(png|jpg|jpeg)$/i.test(file.name));
+
+                // Create a map of image filenames (without extension) to their download URLs
+                const imageMap = {};
+                validImageFiles.forEach(image => {
+                    const imageName = image.name.replace(/\.(png|jpg|jpeg)$/i, '');
+                    imageMap[imageName] = image.download_url;
+                });
+
                 const container = document.querySelector('.button-container');
 
-                audioFiles.forEach(file => {
+                validAudioFiles.forEach(file => {
                     const wrapper = document.createElement('div');
                     wrapper.className = 'sound-button-wrapper';
 
                     const button = document.createElement('button');
-                    const randomColor = colors[Math.floor(Math.random() * colors.length)];
-                    button.className = `sound-button ${randomColor}`;
+                    button.className = 'sound-button';
                     button.innerHTML = '<div class="button-face"></div><div class="glossy-effect"></div>';
+
+                    // Get audio file name without extension
+                    const audioName = file.name.replace(/\.(mp3|wav|ogg)$/i, '');
+
+                    // Set background image if available
+                    if (imageMap[audioName]) {
+                        button.style.backgroundImage = `url(${imageMap[audioName]})`;
+                    } else {
+                        button.classList.add('no-image'); // Fallback to default blue button
+                    }
+
                     button.onclick = () => playSound(file.download_url, button);
 
                     const label = document.createElement('div');
                     label.className = 'button-label';
-                    label.textContent = file.name.replace(/\.(mp3|wav|ogg)$/i, '');
+                    label.textContent = audioName;
 
                     wrapper.appendChild(button);
                     wrapper.appendChild(label);
                     container.appendChild(wrapper);
                 });
             } catch (error) {
-                console.error('Error fetching audio files:', error);
+                console.error('Error fetching files:', error);
                 const container = document.querySelector('.button-container');
-                container.innerHTML = '<p style="color: red;">Failed to load audio files. Please try again later.</p>';
+                container.innerHTML = '<p style="color: red;">Failed to load audio or image files. Please try again later.</p>';
             }
         }
 
