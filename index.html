@@ -240,14 +240,26 @@
         const colors = ['red', 'pink', 'green', 'blue', 'yellow', 'purple', 'white', 'lime'];
 
         function playSound(audioUrl, button) {
+            // If the same button is clicked while playing, pause the audio
+            if (currentButton === button && currentAudio && !currentAudio.paused) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+                currentButton.classList.remove('is-playing');
+                currentAudio = null;
+                currentButton = null;
+                return;
+            }
+
+            // Stop any currently playing audio
             if (currentAudio) {
                 currentAudio.pause();
                 currentAudio.currentTime = 0;
-                if ( button !== currentButton && currentButton) {
+                if (currentButton) {
                     currentButton.classList.remove('is-playing');
                 }
             }
 
+            // Play new audio
             currentAudio = new Audio(audioUrl);
             currentButton = button;
             currentButton.classList.add('is-playing');
@@ -277,9 +289,9 @@
                     const imageResponse = await fetch(imageApiUrl);
                     if (imageResponse.ok) {
                         const imageFiles = await imageResponse.json();
-                        const validImageFiles = imageFiles.filter(file => /\.(png|jpg|jpeg)$/i.test(file.name));
+                        const validImageFiles = imageFiles.filter(file => /\.(png|jpg|jpeg|webp|avif|gif|bmp|tiff|svg)$/i.test(file.name));
                         validImageFiles.forEach(image => {
-                            const imageName = image.name.replace(/\.(png|jpg|jpeg)$/i, '');
+                            const imageName = image.name.replace(/\.(png|jpg|jpeg|webp|avif|gif|bmp|tiff|svg)$/i, '');
                             imageMap[imageName] = image.download_url;
                         });
                     } else {
